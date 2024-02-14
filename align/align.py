@@ -128,12 +128,92 @@ class NeedlemanWunsch:
         
         # TODO: Initialize matrix private attributes for use in alignment
         # create matrices for alignment scores, gaps, and backtracing
-        pass
+        # Match matrix
+        m = np.empty((len(self._seqB)+1,len(self._seqA)+1))
 
-        
-        # TODO: Implement global alignment here
-        pass      		
-        		    
+        # Extension matrices
+        ea = np.empty((len(self._seqB)+1,len(self._seqA)+1))
+        eb = np.empty((len(self._seqB)+1,len(self._seqA)+1))
+
+        # Establish trace dictionary
+        self.trace=dict()
+
+        # Intialize values first value
+        m[0,0]=0
+        ea[0,0]=self.gap_open
+        eb[0,0]=self.gap_open
+
+        # intilize first row
+        for i in range(1,len(seqB)+1):
+            m[i,0]=float("-inf")
+            ea[i,0]=float("-inf")
+            eb[i,0]=eb[i-1,0]+self.gap_extend
+            self.trace["eb{},0".format(i)]=["b_gap"]
+            self.trace["m{},0".format(i)]=["inf"]
+            self.trace["ea{},0".format(i)]=["inf"]
+
+        #intilize first column
+        for j in range(1,len(seqA)+1):
+            m[0,j]=float("-inf")
+            eb[0,j]=float("-inf")
+            ea[0,j]=ea[0,j-1]+self.gap_extend
+            self.trace["ea0,{}".format(j)]=["a_gap"]
+            self.trace["m0,{}".format(j)]=["inf"]
+            self.trace["eb0,{}".format(j)]=["inf"]
+
+        self.trace["m0,0"]=["end"]
+
+        # Loop through and fill out matrix
+        for i in range(1,len(seqB)+1):
+            for j in range(1,len(seqA)+1):
+                # Calculate match options
+                m_opt=[m[i-1,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])],
+                           ea[i-1,j]+self.sub_dict[(seqB[i-1],seqA[j-1])],
+                           eb[i,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])]]
+                m[i,j]=max(m_opt)
+
+               
+                #Get the index of the max value since it takes first value this priottizes from m
+                prev=m_opt.index(max(m_opt))
+                if prev==0:
+                    self.trace["m{0},{1}".format(i,j)]= self.trace["m{0},{1}".format(i-1,j-1)]+["diag"]
+                elif prev==1: 
+                    self.trace["m{0},{1}".format(i,j)]= self.trace["ea{0},{1}".format(i-1,j)]+["a_gap"]
+                else:
+                    self.trace["m{0},{1}".format(i,j)]= self.trace["eb{0},{1}".format(i,j-1)]+["b_gap"]
+                
+                # Calculate extend a options
+                ea_opt=[m[i-1,j]+self.gap_open+self.gap_extend,
+                        ea[i-1,j]+self.gap_extend]
+                ea[i,j]=max(ea_opt)
+
+                prev=ea_opt.index(max(ea_opt))
+                if prev==0:
+                    self.trace["ea{0},{1}".format(i,j)]= self.trace["m{0},{1}".format(i-1,j)]+["a_gap"]
+                else: 
+                    self.trace["ea{0},{1}".format(i,j)]= self.trace["ea{0},{1}".format(i-1,j)]+["a_gap"]
+               
+                # Calculate extend b options
+                eb_opt=[m[i,j-1]+self.gap_open+self.gap_extend,
+                        eb[i,j-1]+self.gap_extend]
+                eb[i,j]=max(eb_opt)
+
+                prev=eb_opt.index(max(eb_opt))
+                if prev==0:
+                    self.trace["eb{0},{1}".format(i,j)]= self.trace["m{0},{1}".format(i,j-1)]+["b_gap"]
+                else: 
+                    self.trace["eb{0},{1}".format(i,j)]= self.trace["eb{0},{1}".format(i,j-1)]+["b_gap"]
+
+                # print(m)
+                # print(ea)
+                # print(eb)
+
+        # pull final values for traceback
+        self._m_final = m[(len(self._seqB),len(self._seqA))]
+        self._ea_final = ea[(len(self._seqB),len(self._seqA))]
+        self._eb_final = eb[(len(self._seqB),len(self._seqA))]	
+
+
         return self._backtrace()
 
     def _backtrace(self) -> Tuple[float, str, str]:
@@ -150,7 +230,51 @@ class NeedlemanWunsch:
          	(alignment score, seqA alignment, seqB alignment) : Tuple[float, str, str]
          		the score and corresponding strings for the alignment of seqA and seqB
         """
-        pass
+        end_res=[self._m_final,self._ea_final,self._eb_final]
+        self.alignment_score=max(end_res)
+
+        # Figure out path
+        prev=end_res.index(max(end_res))
+        if prev==0:
+            path=self.trace["m{},{}".format(len(self._seqB),len(self._seqA))]
+        elif prev==1:
+            path=self.trace["ea{},{}".format(len(self._seqB),len(self._seqA))]
+        else:
+            path=self.trace["eb{},{}".format(len(self._seqB),len(self._seqA))]
+        
+        # Start at front of each sequence
+        a_index=0
+        b_index=0
+        self.seqA_align=""
+        self.seqB_align=""
+
+        # Start at 1 since first should always be end
+        for val in path[1:]:
+            # If this is diagonal 
+            if val == "diag":
+                # Add the next value from both sequences
+                self.seqA_align="".join([self.seqA_align, self._seqA[a_index]])
+                self.seqB_align="".join([self.seqB_align, self._seqB[b_index]])
+                
+                # Move to next potential value
+                a_index+=1
+                b_index+=1
+
+            elif val == "a_gap":
+                self.seqA_align="".join([self.seqA_align, "-"])
+                self.seqB_align="".join([self.seqB_align, self._seqB[b_index]])
+
+                b_index+=1
+
+            # b_gap senario
+            else:
+                self.seqA_align="".join([self.seqA_align, self._seqA[a_index]])
+                self.seqB_align="".join([self.seqB_align, "-"])
+
+                a_index+=1
+
+
+
 
         return (self.alignment_score, self.seqA_align, self.seqB_align)
 
