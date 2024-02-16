@@ -53,8 +53,3 @@ def test_nw_backtrace():
     test=NeedlemanWunsch("substitution_matrices/BLOSUM62.mat" , -10,-1)
     assert test.align(seq3,seq4) == (17,"MAVHQLIRRP","M---QLIRHP")
     pass
-
-
-
-test_nw_backtrace()
-test_nw_alignment()
