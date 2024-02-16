@@ -19,9 +19,8 @@ classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
 dependencies = [
     "pytest",
-	"numpy",
-	"scipy"
+	"numpy"
 ]
 
 [project.urls]
-Home = "https://github.com/jakeox13/HW3-Clustering.git"
+Home = "https://github.com/jakeox13/HW5-NW.git"
