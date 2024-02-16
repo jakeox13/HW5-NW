@@ -31,6 +31,9 @@ def test_nw_alignment():
 
     test=NeedlemanWunsch("substitution_matrices/BLOSUM62.mat" , -10,-1)
     test.align(seq1,seq2)
+    print(test._m)
+    print(test._ea)
+    print(test._eb)
     print (test.trace["m3,4"])
     print(test.seqA_align)
     print(test.seqB_align)
@@ -56,11 +59,13 @@ def test_nw_backtrace():
     test=NeedlemanWunsch("substitution_matrices/BLOSUM62.mat" , -10,-1)
     print(test.align(seq3,seq4))
     print(test._m)
+    print(test._ea)
+    print(test._eb)
     print(test.trace["m{},{}".format(len(seq4),len(seq3))])
     assert test.align(seq3,seq4) == (17,"MAVHQLIRRP","M---QLIRHP")
     pass
 
 
 
-test_nw_backtrace()
+#test_nw_backtrace()
 test_nw_alignment()
