@@ -129,34 +129,34 @@ class NeedlemanWunsch:
         # TODO: Initialize matrix private attributes for use in alignment
         # create matrices for alignment scores, gaps, and backtracing
         # Match matrix
-        m = np.empty((len(self._seqB)+1,len(self._seqA)+1))
+        self._m = np.empty((len(self._seqB)+1,len(self._seqA)+1))
 
         # Extension matrices
-        ea = np.empty((len(self._seqB)+1,len(self._seqA)+1))
-        eb = np.empty((len(self._seqB)+1,len(self._seqA)+1))
+        self._ea = np.empty((len(self._seqB)+1,len(self._seqA)+1))
+        self._eb = np.empty((len(self._seqB)+1,len(self._seqA)+1))
 
         # Establish trace dictionary
         self.trace=dict()
 
         # Intialize values first value
-        m[0,0]=0
-        ea[0,0]=self.gap_open
-        eb[0,0]=self.gap_open
+        self._m[0,0]=0
+        self._ea[0,0]=self.gap_open
+        self._eb[0,0]=self.gap_open
 
         # intilize first row
         for i in range(1,len(seqB)+1):
-            m[i,0]=float("-inf")
-            ea[i,0]=float("-inf")
-            eb[i,0]=eb[i-1,0]+self.gap_extend
+            self._m[i,0]=float("-inf")
+            self._ea[i,0]=float("-inf")
+            self._eb[i,0]=self._eb[i-1,0]+self.gap_extend
             self.trace["eb{},0".format(i)]=["b_gap"]
             self.trace["m{},0".format(i)]=["inf"]
             self.trace["ea{},0".format(i)]=["inf"]
 
         #intilize first column
         for j in range(1,len(seqA)+1):
-            m[0,j]=float("-inf")
-            eb[0,j]=float("-inf")
-            ea[0,j]=ea[0,j-1]+self.gap_extend
+            self._m[0,j]=float("-inf")
+            self._eb[0,j]=float("-inf")
+            self._ea[0,j]=self._ea[0,j-1]+self.gap_extend
             self.trace["ea0,{}".format(j)]=["a_gap"]
             self.trace["m0,{}".format(j)]=["inf"]
             self.trace["eb0,{}".format(j)]=["inf"]
@@ -167,10 +167,10 @@ class NeedlemanWunsch:
         for i in range(1,len(seqB)+1):
             for j in range(1,len(seqA)+1):
                 # Calculate match options
-                m_opt=[m[i-1,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])],
-                           ea[i-1,j]+self.sub_dict[(seqB[i-1],seqA[j-1])],
-                           eb[i,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])]]
-                m[i,j]=max(m_opt)
+                m_opt=[self._m[i-1,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])],
+                           self._ea[i-1,j]+self.sub_dict[(seqB[i-1],seqA[j-1])],
+                           self._eb[i,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])]]
+                self._m[i,j]=max(m_opt)
 
                
                 #Get the index of the max value since it takes first value this priottizes from m
@@ -183,9 +183,9 @@ class NeedlemanWunsch:
                     self.trace["m{0},{1}".format(i,j)]= self.trace["eb{0},{1}".format(i,j-1)]+["b_gap"]
                 
                 # Calculate extend a options
-                ea_opt=[m[i-1,j]+self.gap_open+self.gap_extend,
-                        ea[i-1,j]+self.gap_extend]
-                ea[i,j]=max(ea_opt)
+                ea_opt=[self._m[i-1,j]+self.gap_open+self.gap_extend,
+                        self._ea[i-1,j]+self.gap_extend]
+                self._ea[i,j]=max(ea_opt)
 
                 prev=ea_opt.index(max(ea_opt))
                 if prev==0:
@@ -194,9 +194,9 @@ class NeedlemanWunsch:
                     self.trace["ea{0},{1}".format(i,j)]= self.trace["ea{0},{1}".format(i-1,j)]+["a_gap"]
                
                 # Calculate extend b options
-                eb_opt=[m[i,j-1]+self.gap_open+self.gap_extend,
-                        eb[i,j-1]+self.gap_extend]
-                eb[i,j]=max(eb_opt)
+                eb_opt=[self._m[i,j-1]+self.gap_open+self.gap_extend,
+                        self._eb[i,j-1]+self.gap_extend]
+                self._eb[i,j]=max(eb_opt)
 
                 prev=eb_opt.index(max(eb_opt))
                 if prev==0:
@@ -209,9 +209,9 @@ class NeedlemanWunsch:
                 # print(eb)
 
         # pull final values for traceback
-        self._m_final = m[(len(self._seqB),len(self._seqA))]
-        self._ea_final = ea[(len(self._seqB),len(self._seqA))]
-        self._eb_final = eb[(len(self._seqB),len(self._seqA))]	
+        self._m_final = self._m[(len(self._seqB),len(self._seqA))]
+        self._ea_final = self._ea[(len(self._seqB),len(self._seqA))]
+        self._eb_final = self._eb[(len(self._seqB),len(self._seqA))]	
 
 
         return self._backtrace()
