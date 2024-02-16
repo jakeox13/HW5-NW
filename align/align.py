@@ -168,8 +168,8 @@ class NeedlemanWunsch:
             for j in range(1,len(seqA)+1):
                 # Calculate match options
                 m_opt=[    self._m[i-1,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])],
-                           self._ea[i-1,j]+self.sub_dict[(seqB[i-1],seqA[j-1])],
-                           self._eb[i,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])]
+                           self._ea[i-1,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])],
+                           self._eb[i-1,j-1]+self.sub_dict[(seqB[i-1],seqA[j-1])]
                            ]
                            
                 self._m[i,j]=max(m_opt)
@@ -180,14 +180,14 @@ class NeedlemanWunsch:
                 if prev==0:
                     self.trace["m{0},{1}".format(i,j)]= self.trace["m{0},{1}".format(i-1,j-1)]+["diag"]
                 elif prev==1: 
-                    self.trace["m{0},{1}".format(i,j)]= self.trace["ea{0},{1}".format(i-1,j)]+["a_gap"]
+                    self.trace["m{0},{1}".format(i,j)]= self.trace["ea{0},{1}".format(i-1,j-1)]+["diag"]
                 else:
-                    self.trace["m{0},{1}".format(i,j)]= self.trace["eb{0},{1}".format(i,j-1)]+["b_gap"]
+                    self.trace["m{0},{1}".format(i,j)]= self.trace["eb{0},{1}".format(i-1,j-1)]+["diag"]
                 
                 # Calculate extend a options
                 ea_opt=[self._m[i-1,j]+self.gap_open+self.gap_extend,
                         self._ea[i-1,j]+self.gap_extend,
-                        self._eb[i-1,j]+self.gap_open]
+                        self._eb[i-1,j]+self.gap_open+self.gap_extend]
 
                 self._ea[i,j]=max(ea_opt)
 
@@ -201,7 +201,7 @@ class NeedlemanWunsch:
                
                 # Calculate extend b options
                 eb_opt=[self._m[i,j-1]+self.gap_open+self.gap_extend,
-                        self._ea[i,j-1]+self.gap_open,
+                        self._ea[i,j-1]+self.gap_open+self.gap_extend,
                         self._eb[i,j-1]+self.gap_extend]
                 self._eb[i,j]=max(eb_opt)
 
